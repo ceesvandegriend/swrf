@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 import sqlite3
 
-from .common import Check
+from .check import Check
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
