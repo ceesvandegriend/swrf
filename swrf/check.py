@@ -17,27 +17,45 @@ class Check:
     YELLOW = 2
     RED = 3
 
+    timestamp: int = 0
+    type: str = "check"
     uuid: str = ""
-    time: datetime = datetime.now()
     name: str = "<Unknown>"
-    description: str = ""
     status: int = WHITE
     duration: int = 0
-    timestamp: int = 0
+    description: str = ""
+
+
+@dataclass
+class CheckChange(Check):
+    type: str = "change"
+
+    def __init__(self, check: Check):
+        super().__init__()
+        self.timestamp = check.timestamp
+        self.type = "change"
+        self.uuid = check.uuid
+        self.name = check.name
+        self.status = check.status
+        self.duration = check.duration
+        self.description = check.description
 
 
 def check_encode(check: Check) -> str:
-    txt = f"""uuid: {check.uuid}
-time: {check.time}
-type: check
+    txt = f"""timestamp: {check.timestamp}
+type: {check.type}
+uuid: {check.uuid}
 name: {check.name}
 status: {check.status}
 duration: {check.duration}
-timestamp: {check.time.strftime('%s')}
 
 {check.description}
 """
     return txt
+
+
+def checkchange_encode(change: CheckChange) -> str:
+    return check_encode(change)
 
 
 def check_decode(txt: str) -> Check:
@@ -50,23 +68,25 @@ def check_decode(txt: str) -> Check:
             if len(line) == 0:
                 in_header = False
                 check.description = ""
-            elif line.startswith("uuid:"):
-                check.uuid = str(line.split(": ")[1])
-            elif line.startswith("time:"):
-                check.time = str(line.split(": ")[1])
+            elif line.startswith("timestamp:"):
+                check.timestamp = int(line.split(": ")[1])
             elif line.startswith("type:"):
                 check.type = str(line.split(": ")[1])
+            elif line.startswith("uuid:"):
+                check.uuid = str(line.split(": ")[1])
             elif line.startswith("name:"):
                 check.name = str(line.split(": ")[1])
             elif line.startswith("status:"):
                 check.status = int(line.split(": ")[1])
             elif line.startswith("duration:"):
                 check.duration = int(line.split(": ")[1])
-            elif line.startswith("timestamp:"):
-                check.timestamp = int(line.split(": ")[1])
             else:
                 raise Exception(f"Unknown header: {line}")
         else:
             check.description += line
 
     return check
+
+
+def checkchange_decode(txt: str) -> CheckChange:
+    return CheckChange(check_decode(txt))

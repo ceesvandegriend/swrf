@@ -2,9 +2,9 @@ import logging
 import time
 
 import stomp
-from stomp import listener
+from stomp import ConnectionListener
 
-from swrf.check import Check, check_decode
+from swrf.check import CheckChange, checkchange_decode
 from swrf.config import config
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
@@ -15,19 +15,19 @@ __date__ = "01 januari 2023"
 logger = logging.getLogger(__name__)
 
 
-class PrintListener(stomp.ConnectionListener):
+class CheckChangeListener(ConnectionListener):
     def on_error(self, frame):
         logger.error(f"received an error: {frame}")
 
     def on_message(self, frame):
-        check = check_decode(frame.body)
+        change = checkchange_decode(frame.body)
 
-        if check.status == Check.GREEN:
-            logger.info(f"{check.name}: Green - {check.duration} ms")
-        elif check.status == Check.YELLOW:
-            logger.warning(f"{check.name}: Yellow - {check.duration} ms")
-        elif check.status == Check.RED:
-            logger.error(f"{check.name}: Red - {check.duration} ms")
+        if change.status == CheckChange.GREEN:
+            logger.info(f"{change.name}: Changed to Green - {change.duration} s")
+        elif change.status == CheckChange.YELLOW:
+            logger.warning(f"{change.name}: Changed to Yellow - {change.duration} s")
+        elif change.status == CheckChange.RED:
+            logger.error(f"{change.name}: Changed to Red - {change.duration} s")
 
 
 def main() -> None:
@@ -38,10 +38,10 @@ def main() -> None:
             (config["ACTIVEMQ_HOSTNAME"], config["ACTIVEMQ_PORT"]),
         ]
     )
-    conn.set_listener("print", PrintListener())
+    conn.set_listener("printCheck", CheckChangeListener())
     conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
     logger.info("Connect...")
-    conn.subscribe(config["ACTIVEMQ_TOPIC"], id=1, ack="auto")
+    conn.subscribe(config["ACTIVEMQ_TOPIC_CHANGE"], id=1, ack="auto")
 
     try:
         while True:

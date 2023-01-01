@@ -9,7 +9,7 @@ import requests
 from requests.exceptions import ConnectionError
 import stomp
 
-from swrf.check import Check, check_encode
+from swrf.check import Check, CheckChange, check_encode, checkchange_encode
 from swrf.config import config
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
@@ -55,6 +55,10 @@ def check(id: str, name: str, url: str) -> Check:
 def main() -> None:
     logger.debug("main() - start")
 
+    id = uuid.uuid4()
+    name = config["CHECK_NAME"]
+    url = config["CHECK_URL"]
+    saved = None
     conn = stomp.Connection(
         [
             (config["ACTIVEMQ_HOSTNAME"], config["ACTIVEMQ_PORT"]),
@@ -63,20 +67,64 @@ def main() -> None:
     conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
 
     try:
-        id = uuid.uuid4()
-        name = config["CHECK_NAME"]
-        url = config["CHECK_URL"]
-
         while True:
             chck = check(id, name, url)
-            conn.send(body=check_encode(chck), destination=config["ACTIVEMQ_TOPIC"])
+            conn.send(
+                body=check_encode(chck), destination=config["ACTIVEMQ_TOPIC_CHECK"]
+            )
 
             if chck.status == Check.GREEN:
                 logger.info(f"{chck.name}: Green - {chck.duration} ms")
-            elif c.status == Check.YELLOW:
+            elif chck.status == Check.YELLOW:
                 logger.warning(f"{chck.name}: Yellow - {chck.duration} ms")
-            elif c.status == Check.RED:
+            elif chck.status == Check.RED:
                 logger.error(f"{chck.name}: Red - {chck.duration} ms")
+
+            if saved:
+                # Not new
+                if saved.status != chck.status:
+                    # Changed
+                    change = CheckChange(chck)
+                    change.type = "change"
+                    change.duration = saved.timestamp - chck.timestamp
+                    conn.send(
+                        body=checkchange_encode(change),
+                        destination=config["ACTIVEMQ_TOPIC_CHANGE"],
+                    )
+
+                    if change.status == Check.GREEN:
+                        logger.info(
+                            f"{change.name}: Changed to Green - {change.duration} s"
+                        )
+                    elif chck.status == Check.YELLOW:
+                        logger.warning(
+                            f"{change.name}: Changed to Yellow - {change.duration} s"
+                        )
+                    elif chck.status == Check.RED:
+                        logger.error(
+                            f"{change.name}: Changed to Red - {change.duration} s"
+                        )
+            else:
+                # New
+                change = CheckChange(chck)
+                change.type = "change"
+                change.duration = 0
+                conn.send(
+                    body=checkchange_encode(change),
+                    destination=config["ACTIVEMQ_TOPIC_CHANGE"],
+                )
+                saved = chck
+
+                if change.status == Check.GREEN:
+                    logger.info(
+                        f"{change.name}: Changed to Green - {change.duration} s"
+                    )
+                elif chck.status == Check.YELLOW:
+                    logger.warning(
+                        f"{change.name}: Changed to Yellow - {change.duration} s"
+                    )
+                elif chck.status == Check.RED:
+                    logger.error(f"{change.name}: Changed to Red - {change.duration} s")
 
             time.sleep(60)
     except KeyboardInterrupt:
