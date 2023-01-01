@@ -5,9 +5,10 @@ import logging
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "31 december 2022"
+__date__ = "01 januari 2023"
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class Check:
@@ -16,15 +17,18 @@ class Check:
     YELLOW = 2
     RED = 3
 
+    uuid: str = ""
     time: datetime = datetime.now()
     name: str = "<Unknown>"
     description: str = ""
     status: int = WHITE
     duration: int = 0
+    timestamp: int = 0
 
 
 def check_encode(check: Check) -> str:
-    txt = f"""time: {check.time}
+    txt = f"""uuid: {check.uuid}
+time: {check.time}
 type: check
 name: {check.name}
 status: {check.status}
@@ -34,6 +38,7 @@ timestamp: {check.time.strftime('%s')}
 {check.description}
 """
     return txt
+
 
 def check_decode(txt: str) -> Check:
     check = Check()
@@ -45,6 +50,8 @@ def check_decode(txt: str) -> Check:
             if len(line) == 0:
                 in_header = False
                 check.description = ""
+            elif line.startswith("uuid:"):
+                check.uuid = str(line.split(": ")[1])
             elif line.startswith("time:"):
                 check.time = str(line.split(": ")[1])
             elif line.startswith("type:"):
@@ -63,4 +70,3 @@ def check_decode(txt: str) -> Check:
             check.description += line
 
     return check
-    

@@ -1,13 +1,7 @@
-"""
-Check an URL for connection.
-
-Copyright: (c) 2022 C.A. van de Griend
-"""
-
-
 from datetime import datetime
 import logging
 import time
+import uuid
 import urllib3
 import urllib3.exceptions
 
@@ -21,15 +15,16 @@ from swrf.config import config
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "31 december 2022"
+__date__ = "01 januari 2023"
 
 logger = logging.getLogger(__name__)
 
 
-def check(name: str, url: str) -> Check:
+def check(id: str, name: str, url: str) -> Check:
     logger.debug("check() - start")
 
     check = Check()
+    check.uuid = id
     check.time = datetime.now()
     check.name = name
     check.description = url
@@ -57,48 +52,52 @@ def check(name: str, url: str) -> Check:
     return check
 
 
-def publish(check: Check) -> None:
-    logger.debug("publish() - start")
-
-    conn = stomp.Connection([(config['ACTIVEMQ_HOSTNAME'], config['ACTIVEMQ_PORT']),])
-    conn.connect(config['ACTIVEMQ_USERNAME'], config['ACTIVEMQ_PASSWORD'], wait=True)
-    conn.send(body=check_encode(check), destination=config['ACTIVEMQ_QUEUE'])
-    conn.disconnect()
-
-    logger.debug("publish() - finish")
-
-
 def main() -> None:
     logger.debug("main() - start")
 
-    n = config['CHECK_NAME']
-    u = config['CHECK_URL']
-    c = check(n , u)
+    conn = stomp.Connection(
+        [
+            (config["ACTIVEMQ_HOSTNAME"], config["ACTIVEMQ_PORT"]),
+        ]
+    )
+    conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
 
-    if c.status == Check.GREEN:
-        logger.info(f"{n}: Green - {c.duration} ms")
-    elif c.status == Check.YELLOW:
-        logger.warning(f"{n}: Yellow - {c.duration} ms")
-    elif c.status == Check.RED:
-        logger.error(f"{n}: Red - {c.duration} ms")
+    try:
+        id = uuid.uuid4()
+        name = config["CHECK_NAME"]
+        url = config["CHECK_URL"]
 
-    publish(c)
+        while True:
+            chck = check(id, name, url)
+            conn.send(body=check_encode(chck), destination=config["ACTIVEMQ_TOPIC"])
+
+            if chck.status == Check.GREEN:
+                logger.info(f"{chck.name}: Green - {chck.duration} ms")
+            elif c.status == Check.YELLOW:
+                logger.warning(f"{chck.name}: Yellow - {chck.duration} ms")
+            elif c.status == Check.RED:
+                logger.error(f"{chck.name}: Red - {chck.duration} ms")
+
+            time.sleep(60)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        conn.disconnect()
 
     logger.debug("main() - finish")
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,format="%(asctime)s %(levelname)s %(name)s - %(message)s",)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+    )
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     stomp_log = logging.getLogger("stomp.py")
     stomp_log.setLevel(logging.ERROR)
 
     try:
-        while True:
-            main()
-            time.sleep(30)
-    except KeyboardInterrupt:
-        pass
+        main()
     except Exception as e:
         logger.exception(e)
