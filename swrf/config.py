@@ -3,7 +3,7 @@ import os
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "01 januari 2023"
+__date__ = "02 januari 2023"
 
 config = {}
 
@@ -14,15 +14,11 @@ config["ACTIVEMQ_HOSTNAME"] = os.environ.get("ACTIVEMQ_HOSTNAME", "dev01.kade3.h
 config["ACTIVEMQ_PORT"] = int(os.environ.get("ACTIVEMQ_PORT", "61613"))
 config["ACTIVEMQ_USERNAME"] = os.environ.get("ACTIVEMQ_USERNAME", "admin")
 config["ACTIVEMQ_PASSWORD"] = os.environ.get("ACTIVEMQ_PASSWORD", "admin")
-config["ACTIVEMQ_TOPIC_CHECK"] = os.environ.get("ACTIVEMQ_TOPIC_CHECK", "/topic/check")
-config["ACTIVEMQ_TOPIC_CHANGE"] = os.environ.get(
-    "ACTIVEMQ_TOPIC_CHANGE", "/topic/change"
-)
+config["ACTIVEMQ_TOPIC"] = os.environ.get("ACTIVEMQ_TOPIC", "/topic/check")
 
 
 if __name__ == "__main__":
     print(f"Hostname:     {config['ACTIVEMQ_HOSTNAME']}:{config['ACTIVEMQ_PORT']}")
     print(f"Username:     {config['ACTIVEMQ_USERNAME']}")
-    print(f"Check Topic:  {config['ACTIVEMQ_TOPIC_CHECK']}")
-    print(f"Change Topic: {config['ACTIVEMQ_TOPIC_CHANGE']}")
+    print(f"Check:        {config['ACTIVEMQ_TOPIC']}")
     print(f"{config['CHECK_NAME']} - {config['CHECK_URL']}")

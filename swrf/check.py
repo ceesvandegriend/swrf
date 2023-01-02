@@ -5,7 +5,7 @@ import logging
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "01 januari 2023"
+__date__ = "02 januari 2023"
 
 logger = logging.getLogger(__name__)
 
@@ -17,76 +17,74 @@ class Check:
     YELLOW = 2
     RED = 3
 
+    # Epoch seconds
     timestamp: int = 0
     type: str = "check"
     uuid: str = ""
     name: str = "<Unknown>"
     status: int = WHITE
+    # Duration of the check in ms
     duration: int = 0
+    # Has the status changed?
+    changed: int = 0
+    # The period since the last chnage in s
+    period: int = 0
     description: str = ""
 
+    def clone(self):
+        clone = Check()
+        clone.timestamp = self.timestamp
+        clone.type = self.type
+        clone.uuid = self.uuid
+        clone.name = self.name
+        clone.status = self.status
+        clone.duration = self.duration
+        clone.changed = self.changed
+        clone.period = self.period
+        clone.description = self.description
 
-@dataclass
-class CheckChange(Check):
-    type: str = "change"
+        return clone
 
-    def __init__(self, check: Check):
-        super().__init__()
-        self.timestamp = check.timestamp
-        self.type = "change"
-        self.uuid = check.uuid
-        self.name = check.name
-        self.status = check.status
-        self.duration = check.duration
-        self.description = check.description
+    def encode(self) -> str:
+        txt = f"""timestamp: {self.timestamp}
+type: {self.type}
+uuid: {self.uuid}
+name: {self.name}
+status: {self.status}
+duration: {self.duration}
+changed: {self.changed}
+period: {self.period}
 
-
-def check_encode(check: Check) -> str:
-    txt = f"""timestamp: {check.timestamp}
-type: {check.type}
-uuid: {check.uuid}
-name: {check.name}
-status: {check.status}
-duration: {check.duration}
-
-{check.description}
+{self.description}
 """
-    return txt
+        return txt
 
+    def decode(self, txt: str) -> None:
+        in_header = True
 
-def checkchange_encode(change: CheckChange) -> str:
-    return check_encode(change)
-
-
-def check_decode(txt: str) -> Check:
-    check = Check()
-    in_header = True
-
-    for line in txt.splitlines():
-        line = line.strip()
-        if in_header:
-            if len(line) == 0:
-                in_header = False
-                check.description = ""
-            elif line.startswith("timestamp:"):
-                check.timestamp = int(line.split(": ")[1])
-            elif line.startswith("type:"):
-                check.type = str(line.split(": ")[1])
-            elif line.startswith("uuid:"):
-                check.uuid = str(line.split(": ")[1])
-            elif line.startswith("name:"):
-                check.name = str(line.split(": ")[1])
-            elif line.startswith("status:"):
-                check.status = int(line.split(": ")[1])
-            elif line.startswith("duration:"):
-                check.duration = int(line.split(": ")[1])
+        for line in txt.splitlines():
+            line = line.strip()
+            if in_header:
+                if len(line) == 0:
+                    in_header = False
+                    self.description = ""
+                elif line.startswith("timestamp: "):
+                    self.timestamp = int(line.split(": ")[1])
+                elif line.startswith("type: "):
+                    self.type = str(line.split(": ")[1])
+                elif line.startswith("uuid: "):
+                    self.uuid = str(line.split(": ")[1])
+                elif line.startswith("name: "):
+                    self.name = str(line.split(": ")[1])
+                elif line.startswith("status: "):
+                    self.status = int(line.split(": ")[1])
+                elif line.startswith("duration: "):
+                    self.duration = int(line.split(": ")[1])
+                elif line.startswith("changed: "):
+                    self.changed = int(line.split(": ")[1])
+                elif line.startswith("period: "):
+                    self.period = int(line.split(": ")[1])
+                else:
+                    raise Exception(f"Unknown header: {line}")
             else:
-                raise Exception(f"Unknown header: {line}")
-        else:
-            check.description += line
-
-    return check
-
-
-def checkchange_decode(txt: str) -> CheckChange:
-    return CheckChange(check_decode(txt))
+                self.description += line

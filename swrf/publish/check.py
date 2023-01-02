@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 import time
 import uuid
@@ -9,13 +8,13 @@ import requests
 from requests.exceptions import ConnectionError
 import stomp
 
-from swrf.check import Check, CheckChange, check_encode, checkchange_encode
+from swrf.check import Check
 from swrf.config import config
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "01 januari 2023"
+__date__ = "02 januari 2023"
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ def check(id: str, name: str, url: str) -> Check:
 
     check = Check()
     check.uuid = id
-    check.time = datetime.now()
+    check.timestamp = int(time.time())
     check.name = name
     check.description = url
 
@@ -43,7 +42,7 @@ def check(id: str, name: str, url: str) -> Check:
 
     if status_code <= 0:
         check.status = Check.RED
-    elif status_code >= 190 and status_code <= 210:
+    elif status_code >= 200 and status_code <= 299:
         check.status = Check.GREEN
     else:
         check.status = Check.YELLOW
@@ -69,62 +68,43 @@ def main() -> None:
     try:
         while True:
             chck = check(id, name, url)
-            conn.send(
-                body=check_encode(chck), destination=config["ACTIVEMQ_TOPIC_CHECK"]
-            )
 
-            if chck.status == Check.GREEN:
-                logger.info(f"{chck.name}: Green - {chck.duration} ms")
-            elif chck.status == Check.YELLOW:
-                logger.warning(f"{chck.name}: Yellow - {chck.duration} ms")
-            elif chck.status == Check.RED:
-                logger.error(f"{chck.name}: Red - {chck.duration} ms")
-
-            if saved:
-                # Not new
-                if saved.status != chck.status:
-                    # Changed
-                    change = CheckChange(chck)
-                    change.type = "change"
-                    change.duration = saved.timestamp - chck.timestamp
-                    conn.send(
-                        body=checkchange_encode(change),
-                        destination=config["ACTIVEMQ_TOPIC_CHANGE"],
-                    )
-
-                    if change.status == Check.GREEN:
-                        logger.info(
-                            f"{change.name}: Changed to Green - {change.duration} s"
-                        )
-                    elif chck.status == Check.YELLOW:
-                        logger.warning(
-                            f"{change.name}: Changed to Yellow - {change.duration} s"
-                        )
-                    elif chck.status == Check.RED:
-                        logger.error(
-                            f"{change.name}: Changed to Red - {change.duration} s"
-                        )
+            if not saved:
+                chck.changed = 1
+                chck.period = 0
+                saved = chck.clone()
+            elif saved.status != chck.status:
+                chck.changed = 1
+                chck.period = chck.timestamp - saved.timestamp
+                saved = chck.clone()
             else:
-                # New
-                change = CheckChange(chck)
-                change.type = "change"
-                change.duration = 0
-                conn.send(
-                    body=checkchange_encode(change),
-                    destination=config["ACTIVEMQ_TOPIC_CHANGE"],
-                )
-                saved = chck
+                chck.changed = 0
+                chck.period = chck.timestamp - saved.timestamp
 
-                if change.status == Check.GREEN:
-                    logger.info(
-                        f"{change.name}: Changed to Green - {change.duration} s"
-                    )
-                elif chck.status == Check.YELLOW:
-                    logger.warning(
-                        f"{change.name}: Changed to Yellow - {change.duration} s"
-                    )
-                elif chck.status == Check.RED:
-                    logger.error(f"{change.name}: Changed to Red - {change.duration} s")
+            conn.send(body=chck.encode(), destination=config["ACTIVEMQ_TOPIC"])
+
+            if chck.status == Check.GREEN and chck.changed == 0:
+                logger.info(
+                    f"{chck.name}: Green - {chck.duration} ms / {chck.period} s"
+                )
+            elif chck.status == Check.GREEN:
+                logger.info(
+                    f"{chck.name}: Changed to Green - {chck.duration} ms / {chck.period} s"
+                )
+            elif chck.status == Check.YELLOW and chck.changed == 0:
+                logger.warning(
+                    f"{chck.name}: Yellow - {chck.duration} ms / {chck.period} s"
+                )
+            elif chck.status == Check.YELLOW:
+                logger.warning(
+                    f"{chck.name}: Chanmged to Yellow - {chck.duration} ms / {chck.period} s"
+                )
+            elif chck.status == Check.RED and chck.changed == 0:
+                logger.error(f"{chck.name}: Red - {chck.duration} ms / {chck.period} s")
+            elif chck.status == Check.RED:
+                logger.error(
+                    f"{chck.name}: Changed to Red - {chck.duration} ms / {chck.period} s"
+                )
 
             time.sleep(60)
     except KeyboardInterrupt:

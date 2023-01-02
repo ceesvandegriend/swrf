@@ -4,13 +4,13 @@ import time
 import stomp
 from stomp import ConnectionListener
 
-from swrf.check import Check, check_decode
+from swrf.check import Check
 from swrf.config import config
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "01 januari 2023"
+__date__ = "02 januari 2023"
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +20,29 @@ class CheckListener(ConnectionListener):
         logger.error(f"received an error: {frame}")
 
     def on_message(self, frame):
-        check = check_decode(frame.body)
+        chck = Check()
+        chck.decode(frame.body)
 
-        if check.status == Check.GREEN:
-            logger.info(f"{check.name}: Green - {check.duration} ms")
-        elif check.status == Check.YELLOW:
-            logger.warning(f"{check.name}: Yellow - {check.duration} ms")
-        elif check.status == Check.RED:
-            logger.error(f"{check.name}: Red - {check.duration} ms")
+        if chck.status == Check.GREEN and chck.changed == 0:
+            logger.info(f"{chck.name}: Green - {chck.duration} ms / {chck.period} s")
+        elif chck.status == Check.GREEN:
+            logger.info(
+                f"{chck.name}: Changed to Green - {chck.duration} ms / {chck.period} s"
+            )
+        elif chck.status == Check.YELLOW and chck.changed == 0:
+            logger.warning(
+                f"{chck.name}: Yellow - {chck.duration} ms / {chck.period} s"
+            )
+        elif chck.status == Check.YELLOW:
+            logger.warning(
+                f"{chck.name}: Chanmged to Yellow - {chck.duration} ms / {chck.period} s"
+            )
+        elif chck.status == Check.RED and chck.changed == 0:
+            logger.error(f"{chck.name}: Red - {chck.duration} ms / {chck.period} s")
+        elif chck.status == Check.RED:
+            logger.error(
+                f"{chck.name}: Changed to Red - {chck.duration} ms / {chck.period} s"
+            )
 
 
 def main() -> None:
@@ -41,7 +56,7 @@ def main() -> None:
     conn.set_listener("printCheck", CheckListener())
     conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
     logger.info("Connect...")
-    conn.subscribe(config["ACTIVEMQ_TOPIC_CHECK"], id=1, ack="auto")
+    conn.subscribe(config["ACTIVEMQ_TOPIC"], id=1, ack="auto")
 
     try:
         while True:
