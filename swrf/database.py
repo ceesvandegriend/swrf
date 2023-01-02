@@ -3,26 +3,40 @@ import os
 from pathlib import Path
 import sqlite3
 
-from .check import Check
+from swrf.check import Check
 
 __author__ = "Cees van de Griend <cees@griend.eu>"
 __status__ = "development"
 __version__ = "0.1"
-__date__ = "29 december 2022"
+__date__ = "02 januari 2023"
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS checks (
     id          INTEGER   NOT NULL PRIMARY KEY AUTOINCREMENT,
-    time        TIMESTAMP NOT NULL,
+    ts          TIMESTAMP NOT NULL,
+    type        TEXT      NOT NULL,
+    uuid        TEXT      NOT NULL,
     name        TEXT      NOT NULL,
-    description TEXT      NOT NULL DEFAULT '',
     status      INTEGER   NOT NULL DEFAULT 0,
-    duration    INTEGER   NOT NULL DEFAULT 0
+    duration    INTEGER   NOT NULL DEFAULT 0,
+    changed     INTEGER   NOT NULL DEFAULT 0,
+    period      INTEGER   NOT NULL DEFAULT 0,
+    description TEXT      NOT NULL DEFAULT ''
 )
 """
 
 INSERT_CHECK_SQL = """
-INSERT INTO checks (time, name, description, status, duration) VALUES(?, ?, ?, ?, ?)
+INSERT INTO checks (
+    ts, 
+    type, 
+    uuid, 
+    name, 
+    status, 
+    duration, 
+    changed, 
+    period, 
+    description
+) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -58,11 +72,15 @@ def database_insert_check(filename: str, check: Check):
     logger.debug(f"database_insert_check({filename}) - start")
 
     data = (
-        check.time,
+        check.timestamp,
+        check.type,
+        check.uuid,
         check.name,
-        check.description,
         check.status,
         check.duration,
+        check.changed,
+        check.period,
+        check.description,
     )
 
     with sqlite3.connect(filename) as conn:
