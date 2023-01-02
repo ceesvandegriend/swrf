@@ -1,9 +1,9 @@
 [project]
 name = "swrf"
-version = "0.1.0"
+version = "0.1.1"
 description = "swrf / sorrowful - Check internet connection"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 license = {file = "LICENSE.md"}
 keywords = ["apachemq", "check",]
 authors = [
@@ -27,6 +27,8 @@ classifiers = [
   # Pick your license as you wish
   "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3 :: Only",
 ]
