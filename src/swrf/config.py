@@ -1,10 +1,5 @@
 import os
 
-__author__ = "Cees van de Griend <cees@griend.eu>"
-__status__ = "development"
-__version__ = "0.1"
-__date__ = "02 januari 2023"
-
 config = {}
 
 config["CHECK_NAME"] = os.environ.get("CHECK_NAME", "Google")

@@ -1,14 +1,8 @@
 import logging
 import os
-from pathlib import Path
 import sqlite3
 
 from swrf.check import Check
-
-__author__ = "Cees van de Griend <cees@griend.eu>"
-__status__ = "development"
-__version__ = "0.1"
-__date__ = "02 januari 2023"
 
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS checks (
@@ -44,14 +38,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_database_filename():
-    dir = os.path.dirname(__file__)
-    prj_dir = os.path.dirname(dir)
-    var_dir = os.path.join(prj_dir, "var")
-    db_dir = os.path.join(var_dir, "db")
-    db_filename = os.path.join(db_dir, "swrf.db")
+    home_dir = os.path.expanduser("~")
+    db_dir = os.path.join(home_dir, "var", "swrf", "db")
+    # Override with environment variable, if exists
+    db_dir = os.environ.get("DB_DIR", db_dir)
 
     if not os.path.isdir(db_dir):
         os.makedirs(db_dir)
+
+    db_filename = os.path.join(db_dir, "swrf.db")
 
     return db_filename
 

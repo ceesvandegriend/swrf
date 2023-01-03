@@ -9,11 +9,6 @@ from swrf.check import Check
 from swrf.config import config
 from swrf.database import get_database_filename, database_insert_check
 
-__author__ = "Cees van de Griend <cees@griend.eu>"
-__status__ = "development"
-__version__ = "0.1"
-__date__ = "02 januari 2023"
-
 logger = logging.getLogger(__name__)
 
 
