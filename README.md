@@ -1,3 +1,5 @@
+[![Python package](https://github.com/ceesvandegriend/swrf/actions/workflows/main.yml/badge.svg)](https://github.com/ceesvandegriend/swrf/actions/workflows/main.yml)
+
 # swrf / Sorrowful
 
 Check that the home network is connected to the
