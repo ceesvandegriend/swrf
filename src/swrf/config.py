@@ -13,6 +13,9 @@ config["ACTIVEMQ_USERNAME"] = os.environ.get("ACTIVEMQ_USERNAME", "admin")
 config["ACTIVEMQ_PASSWORD"] = os.environ.get("ACTIVEMQ_PASSWORD", "admin")
 config["ACTIVEMQ_TOPIC"] = os.environ.get("ACTIVEMQ_TOPIC", "/topic/check")
 
+config["GMAIL_USERNAME"] = os.environ.get("GMAIL_USERNAME", "user@example.com")
+config["GMAIL_PASSWORD"] = os.environ.get("GMAIL_PASSWORD", "****************")
+
 
 if __name__ == "__main__":
     print(
