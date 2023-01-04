@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS checks (
 
 INSERT_CHECK_SQL = """
 INSERT INTO checks (
-    ts, 
+    ts,
     type, 
     uuid, 
     name, 

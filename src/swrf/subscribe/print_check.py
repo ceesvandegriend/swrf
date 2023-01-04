@@ -19,7 +19,9 @@ class CheckListener(ConnectionListener):
         chck.decode(frame.body)
 
         if chck.status == Check.GREEN and chck.changed == 0:
-            logger.info(f"{chck.name}: Green - {chck.duration} ms / {chck.period} s")
+            logger.info(
+                f"{chck.name}: Green - {chck.duration} ms / {chck.period} s"
+            )
         elif chck.status == Check.GREEN:
             logger.info(
                 f"{chck.name}: Changed to Green - {chck.duration} ms / {chck.period} s"
@@ -33,7 +35,9 @@ class CheckListener(ConnectionListener):
                 f"{chck.name}: Chanmged to Yellow - {chck.duration} ms / {chck.period} s"
             )
         elif chck.status == Check.RED and chck.changed == 0:
-            logger.error(f"{chck.name}: Red - {chck.duration} ms / {chck.period} s")
+            logger.error(
+                f"{chck.name}: Red - {chck.duration} ms / {chck.period} s"
+            )
         elif chck.status == Check.RED:
             logger.error(
                 f"{chck.name}: Changed to Red - {chck.duration} ms / {chck.period} s"
@@ -49,7 +53,9 @@ def main() -> None:
         ]
     )
     conn.set_listener("printCheck", CheckListener())
-    conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
+    conn.connect(
+        config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True
+    )
     logger.info("Connect...")
     conn.subscribe(config["ACTIVEMQ_TOPIC"], id=1, ack="auto")
 

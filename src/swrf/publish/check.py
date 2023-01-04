@@ -58,9 +58,18 @@ def main() -> None:
             (config["ACTIVEMQ_HOSTNAME"], config["ACTIVEMQ_PORT"]),
         ]
     )
-    conn.connect(config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True)
+    conn.connect(
+        config["ACTIVEMQ_USERNAME"], config["ACTIVEMQ_PASSWORD"], wait=True
+    )
 
     try:
+        logger.info(
+            f"ActiveMQ server: {config['ACTIVEMQ_HOSTNAME']}:{config['ACTIVEMQ_PORT']}"
+        )
+        logger.info(f"Username:        {config['ACTIVEMQ_USERNAME']}")
+        logger.info(f"Topic:           {config['ACTIVEMQ_TOPIC']}")
+        logger.info(f"{config['CHECK_NAME']} - {config['CHECK_URL']}")
+
         while True:
             chck = check(id, name, url)
 
@@ -92,10 +101,12 @@ def main() -> None:
                 )
             elif chck.status == Check.YELLOW:
                 logger.warning(
-                    f"{chck.name}: Chanmged to Yellow - {chck.duration} ms / {chck.period} s"
+                    f"{chck.name}: Changed to Yellow - {chck.duration} ms / {chck.period} s"
                 )
             elif chck.status == Check.RED and chck.changed == 0:
-                logger.error(f"{chck.name}: Red - {chck.duration} ms / {chck.period} s")
+                logger.error(
+                    f"{chck.name}: Red - {chck.duration} ms / {chck.period} s"
+                )
             elif chck.status == Check.RED:
                 logger.error(
                     f"{chck.name}: Changed to Red - {chck.duration} ms / {chck.period} s"
