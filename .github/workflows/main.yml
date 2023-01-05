@@ -15,8 +15,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install
-        run: make install
+      - name: Install Dev
+        run: make install-dev
       - name: Test
         run: make test
       - name: Lint
