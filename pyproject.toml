@@ -42,13 +42,24 @@ dependencies = [
   "stomp.py",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pip-tools",
+  "pytest", 
+  "pytest-cov",
+  "pylint",
+  "black",
+  "build",
+  "twine",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/ceesvandegriend/swrf"
 "Source Code" = "https://github.com/ceesvandegriend/swrf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov"
+addopts = "--cov=swrf"
 testpaths = [
     "tests",
 ]

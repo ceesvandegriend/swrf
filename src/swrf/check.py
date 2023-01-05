@@ -53,7 +53,9 @@ period: {self.period}
 """
         return txt
 
-    def decode(self, txt: str) -> None:
+    @staticmethod
+    def decode(txt: str) -> "Check":
+        chck = Check()
         in_header = True
 
         for line in txt.splitlines():
@@ -61,24 +63,26 @@ period: {self.period}
             if in_header:
                 if len(line) == 0:
                     in_header = False
-                    self.description = ""
+                    chck.description = ""
                 elif line.startswith("timestamp: "):
-                    self.timestamp = int(line.split(": ")[1])
+                    chck.timestamp = int(line.split(": ")[1])
                 elif line.startswith("type: "):
-                    self.type = str(line.split(": ")[1])
+                    chck.type = str(line.split(": ")[1])
                 elif line.startswith("uuid: "):
-                    self.uuid = str(line.split(": ")[1])
+                    chck.uuid = str(line.split(": ")[1])
                 elif line.startswith("name: "):
-                    self.name = str(line.split(": ")[1])
+                    chck.name = str(line.split(": ")[1])
                 elif line.startswith("status: "):
-                    self.status = int(line.split(": ")[1])
+                    chck.status = int(line.split(": ")[1])
                 elif line.startswith("duration: "):
-                    self.duration = int(line.split(": ")[1])
+                    chck.duration = int(line.split(": ")[1])
                 elif line.startswith("changed: "):
-                    self.changed = int(line.split(": ")[1])
+                    chck.changed = int(line.split(": ")[1])
                 elif line.startswith("period: "):
-                    self.period = int(line.split(": ")[1])
+                    chck.period = int(line.split(": ")[1])
                 else:
                     raise Exception(f"Unknown header: {line}")
             else:
-                self.description += line
+                chck.description += line
+
+        return chck
